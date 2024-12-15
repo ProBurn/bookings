@@ -91,22 +91,27 @@ export async function createCalendarEvent({
 }
 
 async function getOAuthClient(clerkUserId: string) {
-  const token = await clerkClient().users.getUserOauthAccessToken(
-    clerkUserId,
-    "oauth_google"
-  )
+  try {
+    const token = await clerkClient().users.getUserOauthAccessToken(
+      clerkUserId,
+      "oauth_google"
+    )
 
-  if (token.data.length === 0 || token.data[0].token == null) {
-    return
+    if (token.data.length === 0 || token.data[0].token == null) {
+      throw new Error("No OAuth token found for the user")
+    }
+
+    const client = new google.auth.OAuth2(
+      process.env.GOOGLE_OAUTH_CLIENT_ID,
+      process.env.GOOGLE_OAUTH_CLIENT_SECRET,
+      process.env.GOOGLE_OAUTH_REDIRECT_URL
+    )
+
+    client.setCredentials({ access_token: token.data[0].token })
+
+    return client
+  } catch (error) {
+    console.error("Error getting OAuth client:", error)
+    throw new Error("Failed to get OAuth client")
   }
-
-  const client = new google.auth.OAuth2(
-    process.env.GOOGLE_OAUTH_CLIENT_ID,
-    process.env.GOOGLE_OAUTH_CLIENT_SECRET,
-    process.env.GOOGLE_OAUTH_REDIRECT_URL
-  )
-
-  client.setCredentials({ access_token: token.data[0].token })
-
-  return client
 }

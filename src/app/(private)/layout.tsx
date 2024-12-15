@@ -14,6 +14,7 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
           </div>
           <NavLink href="/events">Events</NavLink>
           <NavLink href="/schedule">Schedule</NavLink>
+          <NavLink href="/appointments">Appointments</NavLink>
           <div className="ml-auto size-10">
             <UserButton
               appearance={{ elements: { userButtonAvatarBox: "size-full" } }}

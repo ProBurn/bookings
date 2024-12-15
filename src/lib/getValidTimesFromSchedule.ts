@@ -1,7 +1,6 @@
 import { DAYS_OF_WEEK_IN_ORDER } from "@/data/constants"
 import { db } from "@/drizzle/db"
 import { ScheduleAvailabilityTable } from "@/drizzle/schema"
-import { getCalendarEventTimes } from "@/server/googleCalendar"
 import {
   addMinutes,
   areIntervalsOverlapping,
@@ -17,6 +16,7 @@ import {
   setMinutes,
 } from "date-fns"
 import { fromZonedTime } from "date-fns-tz"
+import { groupBy } from 'lodash';
 
 export async function getValidTimesFromSchedule(
   timesInOrder: Date[],
@@ -27,6 +27,7 @@ export async function getValidTimesFromSchedule(
 
   if (start == null || end == null) return []
 
+  // Fetch the schedule of the clerk from the main database
   const schedule = await db.query.ScheduleTable.findFirst({
     where: ({ clerkUserId: userIdCol }, { eq }) =>
       eq(userIdCol, event.clerkUserId),
@@ -35,16 +36,12 @@ export async function getValidTimesFromSchedule(
 
   if (schedule == null) return []
 
-  const groupedAvailabilities = Object.groupBy(
+  const groupedAvailabilities = groupBy(
     schedule.availabilities,
-    a => a.dayOfWeek
+    (a:any) => a.dayOfWeek
   )
 
-  const eventTimes = await getCalendarEventTimes(event.clerkUserId, {
-    start,
-    end,
-  })
-
+  // Return valid times based on the schedule's availability
   return timesInOrder.filter(intervalDate => {
     const availabilities = getAvailabilities(
       groupedAvailabilities,
@@ -56,17 +53,13 @@ export async function getValidTimesFromSchedule(
       end: addMinutes(intervalDate, event.durationInMinutes),
     }
 
-    return (
-      eventTimes.every(eventTime => {
-        return !areIntervalsOverlapping(eventTime, eventInterval)
-      }) &&
-      availabilities.some(availability => {
-        return (
-          isWithinInterval(eventInterval.start, availability) &&
-          isWithinInterval(eventInterval.end, availability)
-        )
-      })
-    )
+    // Validate if the interval is within availability
+    return availabilities.some(availability => {
+      return (
+        isWithinInterval(eventInterval.start, availability) &&
+        isWithinInterval(eventInterval.end, availability)
+      )
+    })
   })
 }
 

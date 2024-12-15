@@ -4,7 +4,7 @@ import { getValidTimesFromSchedule } from "@/lib/getValidTimesFromSchedule"
 import { meetingActionSchema } from "@/schema/meetings"
 import "use-server"
 import { z } from "zod"
-import { createCalendarEvent } from "../googleCalendar"
+// import { createCalendarEvent } from "../googleCalendar"
 import { redirect } from "next/navigation"
 import { fromZonedTime } from "date-fns-tz"
 
@@ -30,12 +30,12 @@ export async function createMeeting(
   const validTimes = await getValidTimesFromSchedule([startInTimezone], event)
   if (validTimes.length === 0) return { error: true }
 
-  await createCalendarEvent({
-    ...data,
-    startTime: startInTimezone,
-    durationInMinutes: event.durationInMinutes,
-    eventName: event.name,
-  })
+  // await createCalendarEvent({
+  //   ...data,
+  //   startTime: startInTimezone,
+  //   durationInMinutes: event.durationInMinutes,
+  //   eventName: event.name,
+  // })
 
   redirect(
     `/book/${data.clerkUserId}/${
